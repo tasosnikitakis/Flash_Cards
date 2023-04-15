@@ -5,16 +5,36 @@ BACKGROUND_COLOR = "#B1DDC6"
 import random
 import time
 
-running = True
+to_learn_data = []
 foreign_word = ""
 local_word = ""
-pandas_data = pd.read_csv("data/french_words.csv")
+try:
+    pandas_data = pd.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    pandas_data = pd.read_csv("data/french_words.csv")
 dictionary_data = pandas_data.to_dict(orient="records")
+
+
 #-----------------------------------------FLASH CARD GENERATOR-------------------------------------
-
-
-
 def card_generator():
+    global foreign_word
+    global local_word
+    global flip_timer
+    global to_learn_data
+    window.after_cancel(flip_timer)
+    random_pair = random.choice(dictionary_data)
+    foreign_word = random_pair["French"]
+    local_word = random_pair["English"]
+    canvas.itemconfig(language_text, text="French", fill="black")
+    canvas.itemconfig(card_image, image=card_front_image)
+    canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
+    dictionary_data.remove(random_pair)
+    flip_timer = window.after(5000, func=flip_card)
+    return local_word, foreign_word
+
+
+#-----------------------------------------FLASH CARD REMOVER-------------------------------------
+def card_remover():
     global foreign_word
     global local_word
     global flip_timer
@@ -25,22 +45,19 @@ def card_generator():
     canvas.itemconfig(language_text, text="French", fill="black")
     canvas.itemconfig(card_image, image=card_front_image)
     canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
-    flip_timer = window.after(3000, func=flip_card)
-    return foreign_word, local_word
+    flip_timer = window.after(5000, func=flip_card)
+    to_learn_data.append(random_pair)
+    dictionary_data.remove(random_pair)
+    pandas_to_learn = pd.DataFrame(to_learn_data)
+    pandas_to_learn.to_csv("data/words_to_learn.csv", index=0)
+    return local_word, foreign_word
 
 
-
-
-#------------------------------------------------------FLIP MECHANISM-----------------------------------------------
+#------------------------------------------------------FLIP MECHANISM--------------------------
 def flip_card():
     canvas.itemconfig(card_image, image=card_back_image)
     canvas.itemconfig(language_text, text="English", fill="white")
     canvas.itemconfig(word_text, text=f"{local_word}", fill="white")
-
-
-
-
-
 
 
 #----------------------------------------GUI SETUP----------------------------------------------
@@ -48,7 +65,7 @@ def flip_card():
 window = Tk()
 window.title("Flash Cards")
 window.config(padx=50, pady=50, bg=BACKGROUND_COLOR)
-flip_timer = window.after(3000, func=flip_card)
+flip_timer = window.after(5000, func=flip_card)
 
 
 #images
@@ -69,7 +86,7 @@ word_text = canvas.create_text(400, 263, text="word", fill="black", font=("Arial
 #buttons
 Right_Button = Button(image=right_image, highlightthickness=0, command=card_generator)
 Right_Button.grid(column=0, row=1)
-Wrong_Button = Button(image=wrong_image, highlightthickness=0, command=card_generator)
+Wrong_Button = Button(image=wrong_image, highlightthickness=0, command=card_remover)
 Wrong_Button.grid(column=1, row=1)
 
 
