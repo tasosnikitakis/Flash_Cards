@@ -3,21 +3,42 @@ from tkinter import *
 import pandas as pd
 BACKGROUND_COLOR = "#B1DDC6"
 import random
+import time
 
-
-
-
+running = True
+foreign_word = ""
+local_word = ""
+pandas_data = pd.read_csv("data/french_words.csv")
+dictionary_data = pandas_data.to_dict(orient="records")
 #-----------------------------------------FLASH CARD GENERATOR-------------------------------------
 
 
-pandas_data = pd.read_csv("data/french_words.csv")
-dictionary_data = pandas_data.to_dict(orient="records")
+
 def card_generator():
+    global foreign_word
+    global local_word
+    global flip_timer
+    window.after_cancel(flip_timer)
     random_pair = random.choice(dictionary_data)
     foreign_word = random_pair["French"]
-    local_translation = random_pair["English"]
-    canvas.itemconfig(language_text, text="French")
-    canvas.itemconfig(word_text, text=f"{foreign_word}")
+    local_word = random_pair["English"]
+    canvas.itemconfig(language_text, text="French", fill="black")
+    canvas.itemconfig(card_image, image=card_front_image)
+    canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
+    flip_timer = window.after(3000, func=flip_card)
+    return foreign_word, local_word
+
+
+
+
+#------------------------------------------------------FLIP MECHANISM-----------------------------------------------
+def flip_card():
+    canvas.itemconfig(card_image, image=card_back_image)
+    canvas.itemconfig(language_text, text="English", fill="white")
+    canvas.itemconfig(word_text, text=f"{local_word}", fill="white")
+
+
+
 
 
 
@@ -27,6 +48,8 @@ def card_generator():
 window = Tk()
 window.title("Flash Cards")
 window.config(padx=50, pady=50, bg=BACKGROUND_COLOR)
+flip_timer = window.after(3000, func=flip_card)
+
 
 #images
 card_front_image = PhotoImage(file="images/card_front.png")
@@ -37,7 +60,7 @@ wrong_image = PhotoImage(file="images/wrong.png")
 
 #canvas
 canvas = Canvas(width=800, height=526, bg=BACKGROUND_COLOR, highlightthickness=0)
-canvas.create_image(400, 263, image=card_front_image)
+card_image = canvas.create_image(400, 263, image=card_front_image)
 canvas.grid(column=0, row=0, columnspan=2)
 language_text = canvas.create_text(400, 150, text="language", fill="black", font=("Arial", 24, "italic"))
 word_text = canvas.create_text(400, 263, text="word", fill="black", font=("Arial", 60, "bold"))
@@ -50,12 +73,6 @@ Wrong_Button = Button(image=wrong_image, highlightthickness=0, command=card_gene
 Wrong_Button.grid(column=1, row=1)
 
 
-
-
-
-
-
-
-
+card_generator()
 
 window.mainloop()
