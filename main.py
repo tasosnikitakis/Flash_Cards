@@ -1,5 +1,6 @@
 #----------------------------------------IMPORTS AND CONSTANTS---------------------------------------
 from tkinter import *
+from tkinter import messagebox
 import pandas as pd
 BACKGROUND_COLOR = "#B1DDC6"
 import random
@@ -13,7 +14,9 @@ try:
 except FileNotFoundError:
     pandas_data = pd.read_csv("data/french_words.csv")
 dictionary_data = pandas_data.to_dict(orient="records")
-
+#-----------------------------------------CLOSE FUNCTION-------------------------------------
+def close_program():
+    window.destroy()
 
 #-----------------------------------------FLASH CARD GENERATOR-------------------------------------
 def card_generator():
@@ -22,14 +25,18 @@ def card_generator():
     global flip_timer
     global to_learn_data
     window.after_cancel(flip_timer)
-    random_pair = random.choice(dictionary_data)
-    foreign_word = random_pair["French"]
-    local_word = random_pair["English"]
-    canvas.itemconfig(language_text, text="French", fill="black")
-    canvas.itemconfig(card_image, image=card_front_image)
-    canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
-    dictionary_data.remove(random_pair)
-    flip_timer = window.after(5000, func=flip_card)
+    try:
+        random_pair = random.choice(dictionary_data)
+        foreign_word = random_pair["French"]
+        local_word = random_pair["English"]
+        canvas.itemconfig(language_text, text="French", fill="black")
+        canvas.itemconfig(card_image, image=card_front_image)
+        canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
+        dictionary_data.remove(random_pair)
+        flip_timer = window.after(5000, func=flip_card)
+    except IndexError:
+        messagebox.showinfo(title="Error", message="You have gone through all the words")
+        close_program()
     return local_word, foreign_word
 
 
