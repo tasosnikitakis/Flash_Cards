@@ -6,9 +6,13 @@ BACKGROUND_COLOR = "#B1DDC6"
 import random
 import time
 
+
+KNOWN_WORDS = -1
+UNKNOWN_WORDS = 0
 to_learn_data = []
 foreign_word = ""
 local_word = ""
+
 try:
     pandas_data = pd.read_csv("data/words_to_learn.csv")
 except FileNotFoundError:
@@ -20,35 +24,41 @@ def close_program():
 
 #-----------------------------------------FLASH CARD GENERATOR-------------------------------------
 def card_generator():
+    global KNOWN_WORDS
     global foreign_word
     global local_word
     global flip_timer
     global to_learn_data
     window.after_cancel(flip_timer)
+    KNOWN_WORDS += 1
     try:
         random_pair = random.choice(dictionary_data)
         foreign_word = random_pair["French"]
         local_word = random_pair["English"]
+        label_known.config(text=f"Unknown Words: {KNOWN_WORDS}")
         canvas.itemconfig(language_text, text="French", fill="black")
         canvas.itemconfig(card_image, image=card_front_image)
         canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
         dictionary_data.remove(random_pair)
         flip_timer = window.after(5000, func=flip_card)
     except IndexError:
-        messagebox.showinfo(title="Error", message="You have gone through all the words")
+        messagebox.showinfo(title="Τέλος Άσκησης", message="Πάτα ΟΚ για έξοδο")
         close_program()
-    return local_word, foreign_word
+    return local_word, foreign_word, KNOWN_WORDS
 
 
 #-----------------------------------------FLASH CARD REMOVER-------------------------------------
 def card_remover():
+    global UNKNOWN_WORDS
     global foreign_word
     global local_word
     global flip_timer
     window.after_cancel(flip_timer)
+    UNKNOWN_WORDS += 1
     random_pair = random.choice(dictionary_data)
     foreign_word = random_pair["French"]
     local_word = random_pair["English"]
+    label_unknown.config(text=f"Unknown Words: {UNKNOWN_WORDS}")
     canvas.itemconfig(language_text, text="French", fill="black")
     canvas.itemconfig(card_image, image=card_front_image)
     canvas.itemconfig(word_text, text=f"{foreign_word}", fill="black")
@@ -57,7 +67,7 @@ def card_remover():
     dictionary_data.remove(random_pair)
     pandas_to_learn = pd.DataFrame(to_learn_data)
     pandas_to_learn.to_csv("data/words_to_learn.csv", index=0)
-    return local_word, foreign_word
+    return local_word, foreign_word, UNKNOWN_WORDS
 
 
 #------------------------------------------------------FLIP MECHANISM--------------------------
@@ -71,7 +81,7 @@ def flip_card():
 #window setup
 window = Tk()
 window.title("Flash Cards")
-window.config(padx=50, pady=50, bg=BACKGROUND_COLOR)
+window.config(padx=20, pady=20, bg=BACKGROUND_COLOR)
 flip_timer = window.after(5000, func=flip_card)
 
 
@@ -80,6 +90,11 @@ card_front_image = PhotoImage(file="images/card_front.png")
 card_back_image = PhotoImage(file="images/card_back.png")
 right_image = PhotoImage(file="images/right.png")
 wrong_image = PhotoImage(file="images/wrong.png")
+
+label_known = Label(text=f"Known Words: {KNOWN_WORDS}", bg=BACKGROUND_COLOR, font=("Arial", 14, "bold"))
+label_unknown = Label(text=f"Unknown Words: {UNKNOWN_WORDS}", bg=BACKGROUND_COLOR, font=("Arial", 14, "bold"))
+label_known.grid(column=0, row=2)
+label_unknown.grid(column=1, row=2)
 
 
 #canvas
